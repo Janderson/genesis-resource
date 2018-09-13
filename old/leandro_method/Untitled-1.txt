@@ -1,0 +1,13 @@
+Hello,
+
+I would like create a account on iqfeed with same account, used in developer access, using following informations.
+
+Zipcode: 33133
+
+Account number: 2520492
+
+Email: bruno@ls.finance
+
+ 
+
+When i tried that, i got this error: “cannot verify your account”

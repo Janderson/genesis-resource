@@ -1,0 +1,154 @@
+def get_ticker(quotes):
+    return str(quotes.iloc[-1].ticker).strip()
+
+
+def is_top(quotes, idx):
+    if idx >= quotes.tail(1).index[0]:
+        return False
+    if idx < 1:
+        return False
+
+    vol_h = float(average_volatility(quotes[quotes.date <= quotes.loc[idx, 'date']].iloc[::-1]))
+
+    high = quotes.loc[idx, 'high']
+    high_back_1 = quotes.loc[idx+1, 'high']
+    high_next_1 = quotes.loc[idx-1, 'high']
+    low = quotes.loc[idx, 'low']
+    low_back_1 = quotes.loc[idx+1, 'low']
+    low_next_1 = quotes.loc[idx-1, 'low']
+
+    if high > high_back_1 and high > high_next_1 and low > low_next_1:
+        dist = 100 - ( (low_next_1*100) / high)
+        if dist >= (0.1*vol_h):
+            return high 
+
+    # Confirmation in the next candle
+    if idx+1 >= quotes.tail(1).index[0]:
+        return False
+
+    if idx-2 < 0:
+        return False
+
+    high_back_2 = quotes.loc[idx+2, 'high']
+    high_next_2 = quotes.loc[idx-2, 'high']
+    low_back_2 = quotes.loc[idx+2, 'low']
+    low_next_2 = quotes.loc[idx-2, 'low']
+
+    if high > high_back_1 and high > high_next_1 and high > high_next_2 and low > low_back_1 and low > low_next_2:
+        dist = 100 - ( (low_next_2*100) / high)
+        if dist >= (0.1*vol_h):
+            return high
+
+
+    # +3 candles 
+    if idx+2 >= quotes.tail(1).index[0]:
+        return False
+
+    if idx-3 < 0:
+        return False
+
+    high_back_3 = quotes.loc[idx+3, 'high']
+    high_next_3 = quotes.loc[idx-3, 'high']
+    low_back_3 = quotes.loc[idx+3, 'low']
+    low_next_3 = quotes.loc[idx-3, 'low']
+
+    if high > high_back_1 and high > high_next_1 and high > high_next_2 and high > high_next_3  and low > low_next_3:
+        dist = 100 - ( (low_next_3*100) / high)
+        if dist >= (0.1*vol_h):
+            return high
+
+    return False
+
+
+def is_bottom(quotes, idx):
+    if idx >= quotes.tail(1).index[0]:
+        return False
+    if idx < 1:
+        return False     
+
+    vol_h = float(average_volatility(quotes[quotes.date <= quotes.loc[idx, 'date']]))
+
+    high = quotes.loc[idx, 'high']
+    high_back_1 = quotes.loc[idx+1, 'high']
+    high_next_1 = quotes.loc[idx-1, 'high']
+    low = quotes.loc[idx, 'low']
+    low_back_1 = quotes.loc[idx+1, 'low']
+    low_next_1 = quotes.loc[idx-1, 'low']
+
+    # if low < low_back_1 and low < low_next_1 and high < high_back_1 and high < high_next_1:
+    if low < low_back_1 and low < low_next_1 and high < high_next_1:
+        dist = ( (100 * high_next_1) / low) - 100
+        if dist >= (0.1*vol_h):
+            return low
+
+    # Confirmation in the next candle
+    if idx+1 >= quotes.tail(1).index[0]:
+        return False
+
+    if idx-2 < 0:
+        return False
+
+    high_back_2 = quotes.loc[idx+2, 'high']
+    high_next_2 = quotes.loc[idx-2, 'high']
+    low_back_2 = quotes.loc[idx+2, 'low']
+    low_next_2 = quotes.loc[idx-2, 'low']
+
+    if low < low_back_1 and low < low_next_1 and low < low_next_2 and high < high_back_1 and high < high_next_2:
+        dist = ( (100 * high_next_2) / low) - 100
+        if dist >= (0.1*vol_h):
+            return low
+
+    # Next 3 candles
+    if idx+2 >= quotes.tail(1).index[0]:
+        return False
+
+    if idx-3 < 0:
+        return False
+
+    high_back_3 = quotes.loc[idx+3, 'high']
+    high_next_3 = quotes.loc[idx-3, 'high']
+    low_back_3 = quotes.loc[idx+3, 'low']
+    low_next_3 = quotes.loc[idx-3, 'low']
+
+    if low < low_back_1 and low < low_next_1 and low < low_next_3 and high < high_back_1 and high < high_next_3:
+        dist = ( (100 * high_next_2) / low) - 100
+        if dist >= (0.1*vol_h):
+            return low
+
+    return False
+
+def calculate_top_bottom(quotes):
+    if len(quotes.index) == 0:
+       return
+
+    ticker = get_ticker(quotes)
+    quotes = quotes.iloc[::-1]
+
+    previous_pattern = 0
+    for idx in reversed(quotes.index):
+        save_data = False
+        pattern = 0
+        price = 0
+        date = 0 
+        if previous_pattern != 1:
+            if is_top(quotes, idx):
+                price = quotes.loc[idx, 'high']
+                date = quotes.loc[idx, 'date']
+                save_data = True
+                pattern = 1
+                previous_pattern = pattern
+                print("P: {} --> {}".format(pattern, date))
+
+        if previous_pattern != -1:
+            if is_bottom(quotes, idx):
+                if quotes.loc[idx, 'date'] != date:
+                    price = quotes.loc[idx, 'low']
+                    date = quotes.loc[idx, 'date']
+                    save_data = True
+                    pattern = -1
+                    previous_pattern = pattern
+                    print("P: {} --> {}".format(pattern, date))
+
+                    
+
+calculate_top_bottom(quotes)

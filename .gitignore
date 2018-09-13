@@ -1,0 +1,6 @@
+*.zip
+*.lock
+Testes/.ipynb_checkpoints/
+iqfeed-examples/
+jupyter_notebooks/.ipynb_checkpoints/
+jupyter_notebooks/Zig Zag Leandro_.ipynb
